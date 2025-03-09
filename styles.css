@@ -10,6 +10,7 @@
     --text: #fff;
     --purple: #828dff;
     --teal: #24feee;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 body {
@@ -20,6 +21,7 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    font-family: 'Arial', sans-serif;
 }
 
 .container {
@@ -27,7 +29,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    max-width: 500px;
+    max-width: 600px;
     width: 100%;
     padding: 20px;
 }
@@ -40,19 +42,22 @@ body {
     justify-content: space-between;
     gap: 20px;
     width: 100%;
+    background-color: var(--secondaryBackground);
+    box-shadow: var(--shadow);
 }
 
 #progressBar {
     width: 100%;
     height: 10px;
-    background-color: var(--secondaryBackground);
+    background-color: var(--background);
     border-radius: 5px;
     margin-top: 20px;
+    overflow: hidden;
 }
 
-#progress { 
+#progress {
     width: 0%;
-    height: 10px;
+    height: 100%;
     background-color: var(--teal);
     border-radius: 10px;
     transition: all 0.3s ease;
@@ -68,6 +73,7 @@ body {
     justify-content: center;
     font-size: 30px;
     font-weight: bold;
+    box-shadow: var(--shadow);
 }
 
 form {
@@ -84,6 +90,12 @@ input {
     border: 1px solid var(--purple);
     border-radius: 10px;
     color: var(--text);
+    font-size: 16px;
+    box-shadow: var(--shadow);
+}
+
+input::placeholder {
+    color: #828dff99;
 }
 
 button {
@@ -97,8 +109,75 @@ button {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    font-size: 24px;
+    box-shadow: var(--shadow);
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #6b75ff;
+}
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+    width: 100%;
+    list-style: none;
+}
+
+.taskItem {
+    display: flex;
+    background-color: var(--secondaryBackground);
+    padding: 15px;
+    border-radius: 10px;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease;
+    width: 100%;
+}
+
+.taskItem:hover {
+    transform: translateY(-2px);
+}
+
+.task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.task p {
+    font-size: 18px;
+    margin: 0;
+}
+
+.completed p {
+    text-decoration: line-through;
+    color: var(--teal);
+    opacity: 0.7;
+}
+
+.icons {
+    display: flex;
+    gap: 10px;
+}
+
+.icons img {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.icons img:hover {
+    opacity: 0.8;
 }
