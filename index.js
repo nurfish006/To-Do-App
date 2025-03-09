@@ -3,15 +3,48 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 // Add Task
 const addTask = () => {
     const taskInput = document.getElementById("taskInput");
+    const taskDeadline = document.getElementById("taskDeadline");
     const text = taskInput.value.trim();
-    
-    if (text) {
-        tasks.push({ text: text, completed: false });
+    const deadline = taskDeadline.value;
+
+    // Check if the task already exists
+    const isTaskExists = tasks.some(task => task.text.toLowerCase() === text.toLowerCase());
+
+    // Check if the deadline is in the past
+    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    const isPastDeadline = deadline && deadline < today;
+
+    if (isPastDeadline) {
+        displayErrorMessage("Deadline cannot be in the past.");
+        return;
+    }
+
+    if (text && !isTaskExists) {
+        tasks.push({ text: text, completed: false, deadline: deadline || null });
         taskInput.value = '';
+        taskDeadline.value = '';
         updateTaskList();
         updateProgress();
         saveTasks();
+        suggestPriority(); // Update AI suggestions
+    } else if (isTaskExists) {
+        displayErrorMessage("This task already exists!");
     }
+};
+
+// Display Error Message
+const displayErrorMessage = (message) => {
+    const errorMessage = document.createElement("div");
+    errorMessage.className = "error-message";
+    errorMessage.textContent = message;
+
+    const form = document.querySelector("form");
+    form.appendChild(errorMessage);
+
+    // Remove the error message after 3 seconds
+    setTimeout(() => {
+        errorMessage.remove();
+    }, 3000);
 };
 
 // Update Task List
@@ -28,6 +61,7 @@ const updateTaskList = () => {
             <div class="task ${task.completed ? 'completed' : ''}">
                 <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} />
                 <p>${task.text}</p>
+                ${task.deadline ? `<small>Deadline: ${task.deadline}</small>` : ''}
             </div>
             <div class="icons">
                 <img src="./assets/edit.jpg" alt="edit" class="edit" onclick="editTask(${index})" />
@@ -40,6 +74,34 @@ const updateTaskList = () => {
 
         taskList.appendChild(taskItem);
     });
+};
+
+// AI Priority Suggestion
+const suggestPriority = () => {
+    const prioritySuggestion = document.getElementById("prioritySuggestion");
+
+    if (tasks.length === 0) {
+        prioritySuggestion.textContent = "Add tasks to get priority suggestions.";
+        return;
+    }
+
+    // Sort tasks by deadline (earliest first)
+    const sortedTasks = [...tasks].sort((a, b) => {
+        const deadlineA = a.deadline ? new Date(a.deadline) : new Date(9999, 11, 31); // Far future if no deadline
+        const deadlineB = b.deadline ? new Date(b.deadline) : new Date(9999, 11, 31);
+        return deadlineA - deadlineB;
+    });
+
+    // Get the top 3 tasks
+    const topTasks = sortedTasks.slice(0, 3);
+
+    // Display suggestions
+    prioritySuggestion.innerHTML = `
+        <strong>Priority Suggestions:</strong>
+        <ul>
+            ${topTasks.map(task => `<li>${task.text} (Deadline: ${task.deadline || "No deadline"})</li>`).join("")}
+        </ul>
+    `;
 };
 
 // Toggle Task Completion
@@ -58,22 +120,40 @@ const toggleTaskComplete = (index) => {
 // Edit Task
 const editTask = (index) => {
     const taskInput = document.getElementById("taskInput");
+    const taskDeadline = document.getElementById("taskDeadline");
     const submitButton = document.getElementById("newTask");
 
+    // Populate input fields with task details
     taskInput.value = tasks[index].text;
+    taskDeadline.value = tasks[index].deadline || '';
     taskInput.focus();
 
+    // Change button to "Edit" mode
     submitButton.textContent = "Edit";
     submitButton.onclick = (event) => {
         event.preventDefault();
         const newText = taskInput.value.trim();
+        const newDeadline = taskDeadline.value;
+
+        // Check if the deadline is in the past
+        const today = new Date().toISOString().split("T")[0];
+        const isPastDeadline = newDeadline && newDeadline < today;
+
+        if (isPastDeadline) {
+            displayErrorMessage("Deadline cannot be in the past.");
+            return;
+        }
+
         if (newText) {
             tasks[index].text = newText;
+            tasks[index].deadline = newDeadline || null;
             taskInput.value = '';
+            taskDeadline.value = '';
             submitButton.textContent = "+";
             submitButton.onclick = addTask;
             updateTaskList();
             saveTasks();
+            suggestPriority(); // Update AI suggestions
         }
     };
 };
@@ -170,7 +250,8 @@ const updateTaskOrder = () => {
     tasks = Array.from(taskItems).map((item) => {
         const text = item.querySelector("p").textContent;
         const completed = item.querySelector(".checkbox").checked;
-        return { text, completed };
+        const deadline = item.querySelector("small") ? item.querySelector("small").textContent.replace("Deadline: ", "") : null;
+        return { text, completed, deadline };
     });
     saveTasks();
 };

@@ -24,8 +24,10 @@
         </div>
         <form action="">
             <input type="text" id="taskInput" placeholder="Add a task" />
+            <input type="date" id="taskDeadline" placeholder="Deadline" />
             <button type="submit" id="newTask">+</button>
         </form>
+        <div id="prioritySuggestion"></div> <!-- AI Priority Suggestion -->
         <ul class="task-list" id="taskList"></ul> <!-- Added ID for drag-and-drop -->
     </div>
     <script src="./index.js"></script>
