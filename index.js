@@ -1,8 +1,10 @@
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+// Add Task
 const addTask = () => {
     const taskInput = document.getElementById("taskInput");
     const text = taskInput.value.trim();
+    
     if (text) {
         tasks.push({ text: text, completed: false });
         taskInput.value = '';
@@ -12,13 +14,15 @@ const addTask = () => {
     }
 };
 
+// Update Task List
 const updateTaskList = () => {
-    const taskList = document.querySelector(".task-list");
+    const taskList = document.getElementById("taskList");
     taskList.innerHTML = '';
 
     tasks.forEach((task, index) => {
         const taskItem = document.createElement("li");
         taskItem.className = "taskItem";
+        taskItem.draggable = true;
 
         taskItem.innerHTML = `
             <div class="task ${task.completed ? 'completed' : ''}">
@@ -38,6 +42,7 @@ const updateTaskList = () => {
     });
 };
 
+// Toggle Task Completion
 const toggleTaskComplete = (index) => {
     tasks[index].completed = !tasks[index].completed;
     updateTaskList();
@@ -45,20 +50,19 @@ const toggleTaskComplete = (index) => {
     saveTasks();
 
     // Show confetti if all tasks are completed
-    if (tasks.every(task => task.completed)) {
+    if (tasks.length > 0 && tasks.every(task => task.completed)) {
         showConfetti();
     }
 };
 
+// Edit Task
 const editTask = (index) => {
     const taskInput = document.getElementById("taskInput");
     const submitButton = document.getElementById("newTask");
 
-    // Populate input field with task text
     taskInput.value = tasks[index].text;
     taskInput.focus();
 
-    // Change button to "Edit" mode
     submitButton.textContent = "Edit";
     submitButton.onclick = (event) => {
         event.preventDefault();
@@ -67,13 +71,14 @@ const editTask = (index) => {
             tasks[index].text = newText;
             taskInput.value = '';
             submitButton.textContent = "+";
-            submitButton.onclick = addTask; // Reset button to add task mode
+            submitButton.onclick = addTask;
             updateTaskList();
             saveTasks();
         }
     };
 };
 
+// Delete Task
 const deleteTask = (index) => {
     tasks.splice(index, 1);
     updateTaskList();
@@ -81,6 +86,7 @@ const deleteTask = (index) => {
     saveTasks();
 };
 
+// Update Progress Bar
 const updateProgress = () => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(task => task.completed).length;
@@ -97,27 +103,103 @@ const updateProgress = () => {
     numbers.textContent = `${completedTasks} / ${totalTasks}`;
 };
 
+// Save Tasks to Local Storage
 const saveTasks = () => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+// Show Confetti
 const showConfetti = () => {
-    const confettiSettings = { target: 'confetti-canvas', max: 150 };
-    const confetti = new ConfettiGenerator(confettiSettings);
-    confetti.render();
-
-    setTimeout(() => {
-        confetti.clear();
-    }, 3000); // Stop confetti after 3 seconds
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
 };
 
-// Load tasks from local storage on page load
-document.addEventListener("DOMContentLoaded", () => {
-    updateTaskList();
-    updateProgress();
-});
+// Drag-and-Drop Functionality
+let draggedItem = null;
 
+const addDragAndDrop = () => {
+    const taskList = document.getElementById("taskList");
+
+    taskList.addEventListener("dragstart", (e) => {
+        if (e.target.classList.contains("taskItem")) {
+            draggedItem = e.target;
+            e.target.classList.add("dragging");
+        }
+    });
+
+    taskList.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(taskList, e.clientY);
+        const currentItem = document.querySelector(".dragging");
+
+        if (afterElement == null) {
+            taskList.appendChild(currentItem);
+        } else {
+            taskList.insertBefore(currentItem, afterElement);
+        }
+    });
+
+    taskList.addEventListener("dragend", (e) => {
+        if (e.target.classList.contains("taskItem")) {
+            e.target.classList.remove("dragging");
+            updateTaskOrder();
+        }
+    });
+};
+
+const getDragAfterElement = (container, y) => {
+    const draggableElements = [...container.querySelectorAll(".taskItem:not(.dragging)")];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+};
+
+const updateTaskOrder = () => {
+    const taskItems = document.querySelectorAll(".taskItem");
+    tasks = Array.from(taskItems).map((item) => {
+        const text = item.querySelector("p").textContent;
+        const completed = item.querySelector(".checkbox").checked;
+        return { text, completed };
+    });
+    saveTasks();
+};
+
+// Dark Mode Toggle
+const toggleDarkMode = () => {
+    document.body.classList.toggle("light-mode");
+    const isLightMode = document.body.classList.contains("light-mode");
+    localStorage.setItem("theme", isLightMode ? "light" : "dark");
+};
+
+const loadTheme = () => {
+    const theme = localStorage.getItem("theme");
+    if (theme === "light") {
+        document.body.classList.add("light-mode");
+    }
+};
+
+// Event Listeners
+document.getElementById("darkModeToggle").addEventListener("click", toggleDarkMode);
 document.getElementById("newTask").addEventListener("click", function (event) {
     event.preventDefault();
     addTask();
+});
+
+// Initialize
+document.addEventListener("DOMContentLoaded", () => {
+    loadTheme();
+    addDragAndDrop();
+    updateTaskList();
+    updateProgress();
 });
