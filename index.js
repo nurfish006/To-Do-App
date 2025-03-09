@@ -1,5 +1,5 @@
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
+ 
 // Add Task
 const addTask = () => {
     const taskInput = document.getElementById("taskInput");
@@ -22,7 +22,7 @@ const addTask = () => {
     if (text && !isTaskExists) {
         tasks.push({ text: text, completed: false, deadline: deadline || null });
         taskInput.value = '';
-        taskDeadline.value = '';
+        taskDeadline.value = ''; 
         updateTaskList();
         updateProgress();
         saveTasks();
@@ -44,7 +44,7 @@ const displayErrorMessage = (message) => {
     // Remove the error message after 3 seconds
     setTimeout(() => {
         errorMessage.remove();
-    }, 3000);
+    }, 2000);
 };
 
 // Update Task List
@@ -91,7 +91,7 @@ const suggestPriority = () => {
         const deadlineB = b.deadline ? new Date(b.deadline) : new Date(9999, 11, 31);
         return deadlineA - deadlineB;
     });
-
+ 
     // Get the top 3 tasks
     const topTasks = sortedTasks.slice(0, 3);
 
